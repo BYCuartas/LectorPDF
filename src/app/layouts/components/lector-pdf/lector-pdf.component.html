@@ -1,0 +1,103 @@
+<div class="flex flex-col items-center justify-center min-h-screen p-4 bg-gray-50">
+  <ng-container *ngIf="!showPdfView; else pdfViewer">
+    <!-- Contenedor para el área de arrastrar y soltar -->
+    <div
+      class="w-full max-w-lg p-8 border-2 border-dashed rounded-lg bg-white text-center transition-all duration-300"
+      [class.border-gray-400]="!isDragging"
+      [class.border-purple-600]="isDragging"
+      [class.bg-purple-50]="isDragging"
+      (dragover)="onDragOver($event)"
+      (dragleave)="onDragLeave($event)"
+      (drop)="onDrop($event)"
+    >
+      <ng-container *ngIf="!selectedFile; else fileSelected">
+        <p class="text-lg" [class.text-gray-600]="!isDragging" [class.text-purple-600]="isDragging">
+          {{ isDragging ? 'Suelta aquí tu archivo PDF o TIF' : 'Arrastra y suelta aquí tu archivo PDF' }}
+        </p>
+        <p class="text-sm text-gray-500 mt-2">O usa el botón de abajo para seleccionarlo desde tu dispositivo</p>
+        <button
+          class="mt-4 px-4 py-2 bg-purple-800 text-white rounded-lg hover:bg-purple-900 focus:outline-none"
+          (click)="openFileBrowser()"
+        >
+          Abrir explorador de archivos
+        </button>
+      </ng-container>
+      <ng-template #fileSelected>
+        <p class="text-lg text-purple-600">Archivo seleccionado:</p>
+        <p class="text-xl font-semibold mt-2">{{ selectedFile?.name }}</p>
+        <div class="w-full bg-gray-200 rounded-full h-2.5 mt-4">
+          <div class="bg-purple-600 h-2.5 rounded-full" [style.width.%]="uploadProgress"></div>
+        </div>
+        <p class="text-sm text-gray-600 mt-2">{{ uploadProgress }}% cargado</p>
+      </ng-template>
+      <input
+        type="file"
+        accept=".pdf,.tif"
+        class="hidden"
+        #fileInput
+        (change)="onFileSelected($event)"
+      />
+    </div>
+
+    <!-- Mensaje de error -->
+    <p *ngIf="errorMessage" class="text-red-500 mt-4">{{ errorMessage }}</p>
+
+    <!-- Contenedor para los botones de acción -->
+    <div class="flex space-x-4 mt-6">
+      <button
+        class="px-6 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 focus:outline-none"
+        (click)="onCancel()"
+      >
+        Cancelar
+      </button>
+      <button
+        class="px-6 py-2 bg-purple-800 text-white rounded-lg hover:bg-purple-900 focus:outline-none"
+        [disabled]="!selectedFile"
+        (click)="extractTextFromPdf()"
+      >
+        Pasar a texto
+      </button>
+    </div>
+  </ng-container>
+
+  <ng-template #pdfViewer>
+    <div class="w-full max-w-6xl flex flex-col md:flex-row gap-4">
+      <div class="w-full md:w-1/2">
+        <h2 class="text-xl font-semibold mb-2">PDF Cargado</h2>
+        <div class="relative w-full h-[600px] border border-gray-300 rounded overflow-hidden">
+          <ng-container *ngIf="isLoadingPdf; else loadedPdf">
+            <div class="absolute inset-0 flex items-center justify-center bg-gray-100">
+              <div class="text-center">
+                <p class="text-lg text-purple-600 mb-2">{{ selectedFile?.name }}</p>
+                <div class="w-48 h-2 bg-gray-200 rounded-full mx-auto">
+                  <div class="h-full bg-purple-600 rounded-full animate-pulse"></div>
+                </div>
+              </div>
+            </div>
+          </ng-container>
+          <ng-template #loadedPdf>
+            <iframe #pdfViewer class="w-full h-full" title="PDF Viewer"></iframe>
+          </ng-template>
+        </div>
+      </div>
+      <div class="w-full md:w-1/2">
+        <h2 class="text-xl font-semibold mb-2">Texto Extraído</h2>
+        <div *ngIf="idCardInfo" class="mb-4 p-4 bg-green-100 border border-green-300 rounded-lg">
+          <p class="text-green-800 font-semibold">{{ idCardInfo }}</p>
+        </div>
+        <textarea
+          [(ngModel)]="extractedText"
+          class="w-full h-[600px] p-2 border border-gray-300 rounded resize-none"
+          placeholder="El texto extraído del PDF aparecerá aquí..."
+          readonly
+        ></textarea>
+      </div>
+    </div>
+    <button
+      class="mt-4 px-6 py-2 bg-purple-800 text-white rounded-lg hover:bg-purple-900 focus:outline-none"
+      (click)="onCancel()"
+    >
+      Volver
+    </button>
+  </ng-template>
+</div>
